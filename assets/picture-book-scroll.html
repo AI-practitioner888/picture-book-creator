@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>__BOOK_TITLE__</title>
+<style>
+:root {
+  --cover-title-top: 25%;
+  --cover-title-font-size: 30px;
+  --cover-title-color: #ffffff;
+  --cover-subtitle-color: rgba(255,255,255,0.85);
+
+  --radius-lg: 20px;
+  --radius-md: 14px;
+  --radius-sm: 10px;
+  --shadow-card: 0 4px 24px rgba(0,0,0,0.1);
+  --shadow-deep: 0 20px 60px rgba(0,0,0,0.25);
+
+  --transition-fast: 0.25s ease;
+  --transition-normal: 0.4s ease;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: "PingFang SC", "Noto Serif SC", "Microsoft YaHei", sans-serif;
+  background: #faf8f5;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* 竖屏滑动容器 */
+.book-scroll {
+  height: 100vh;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.book-scroll::-webkit-scrollbar { display: none; }
+
+/* 每一页全屏卡片 */
+.page {
+  height: 100vh;
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 60px 20px 80px;
+  position: relative;
+}
+
+/* 图片卡片 */
+.page-image-card {
+  width: 88%;
+  max-width: 440px;
+  aspect-ratio: 3/4;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-deep);
+  position: relative;
+  flex-shrink: 0;
+}
+.page-image-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* 文字卡片 */
+.page-text-card {
+  width: 88%;
+  max-width: 440px;
+  margin-top: 20px;
+  background: #fff;
+  border-radius: var(--radius-md);
+  padding: 24px 26px;
+  box-shadow: var(--shadow-card);
+  font-size: 17px;
+  line-height: 1.9;
+  color: #333;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+/* 页码 */
+.page-num {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  color: #bbb;
+  letter-spacing: 0.1em;
+}
+
+/* ===== 封面样式 ===== */
+.cover-page {
+  background: linear-gradient(180deg, #2c3e50 0%, #1a1a2e 100%);
+  color: #fff;
+  justify-content: center;
+  padding: 40px 20px;
+}
+.cover-page .cover-img-wrap {
+  width: 75%;
+  max-width: 340px;
+  aspect-ratio: 3/4;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-deep);
+  margin-bottom: 40px;
+  transform: rotate(-2deg);
+  position: relative;
+}
+.cover-page .cover-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cover-page .cover-title {
+  font-size: var(--cover-title-font-size);
+  font-weight: bold;
+  color: var(--cover-title-color);
+  text-align: center;
+  margin-bottom: 12px;
+  letter-spacing: 0.1em;
+  line-height: 1.4;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.4);
+}
+.cover-page .cover-subtitle {
+  font-size: 15px;
+  color: var(--cover-subtitle-color);
+  text-align: center;
+  margin-bottom: 40px;
+  letter-spacing: 0.08em;
+}
+.cover-page .scroll-hint {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 14px;
+  color: rgba(255,255,255,0.5);
+  animation: bounceDown 2s infinite;
+}
+@keyframes bounceDown {
+  0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.5; }
+  50% { transform: translateX(-50%) translateY(8px); opacity: 1; }
+}
+.cover-page .scroll-hint::after {
+  content: "↓";
+  display: block;
+  font-size: 20px;
+  margin-top: 4px;
+}
+
+/* ===== 不同布局变体 ===== */
+.page[data-layout="bottom"] .page-text-card {
+  /* 默认：图片在上文字在下 */
+}
+
+.page[data-layout="overlap"] .page-image-card {
+  width: 92%;
+  max-width: 460px;
+}
+.page[data-layout="overlap"] .page-text-card {
+  margin-top: -50px;
+  position: relative;
+  z-index: 2;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+/* ===== 结束页 ===== */
+.end-page {
+  background: linear-gradient(180deg, #faf8f5 0%, #f0ebe3 100%);
+  justify-content: center;
+  text-align: center;
+}
+.end-page h2 {
+  font-size: 32px;
+  color: #333;
+  margin-bottom: 16px;
+  font-weight: 300;
+  letter-spacing: 0.15em;
+}
+.end-page p {
+  font-size: 15px;
+  color: #999;
+  margin-bottom: 8px;
+}
+.end-page .stars {
+  font-size: 28px;
+  margin-bottom: 24px;
+  opacity: 0.8;
+}
+.end-page .back-btn {
+  margin-top: 32px;
+  padding: 12px 36px;
+  background: #333;
+  color: #fff;
+  border: none;
+  border-radius: 30px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.end-page .back-btn:hover {
+  background: #555;
+  transform: translateY(-2px);
+}
+
+/* ===== 进度指示器 ===== */
+.progress-bar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: rgba(0,0,0,0.05);
+  z-index: 100;
+}
+.progress-bar .progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
+/* ===== 目录按钮 ===== */
+.toc-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  background: rgba(255,255,255,0.9);
+  border: none;
+  border-radius: 50%;
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+  z-index: 100;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+.toc-btn:hover {
+  transform: scale(1.1);
+  background: #fff;
+}
+
+/* ===== 目录弹窗 ===== */
+.toc-modal {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+.toc-modal.show {
+  display: flex;
+  opacity: 1;
+}
+.toc-content {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  max-width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  width: 360px;
+  transform: translateY(20px);
+  transition: transform var(--transition-normal);
+}
+.toc-modal.show .toc-content {
+  transform: translateY(0);
+}
+.toc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #eee;
+}
+.toc-header h3 {
+  font-size: 18px;
+  color: #333;
+}
+.toc-close {
+  width: 32px; height: 32px;
+  border: none;
+  background: #f5f5f5;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 18px;
+  color: #666;
+}
+.toc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.toc-item-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.toc-item-row:hover {
+  background: #f5f5f5;
+}
+.toc-item-thumb {
+  width: 40px;
+  height: 54px;
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.toc-item-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.toc-item-label {
+  font-size: 15px;
+  color: #333;
+  flex: 1;
+}
+
+/* ===== 响应式 ===== */
+@media (max-width: 480px) {
+  .page-text-card {
+    font-size: 15px;
+    padding: 18px 20px;
+    margin-top: 16px;
+  }
+  .cover-page .cover-title {
+    font-size: 24px;
+  }
+  .cover-page .cover-subtitle {
+    font-size: 13px;
+  }
+}
+
+img { -webkit-user-drag: none; pointer-events: none; }
+</style>
+</head>
+<body>
+<div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+<button class="toc-btn" onclick="toggleToc()">☰</button>
+
+<div class="book-scroll" id="book-scroll">
+  <!-- Pages injected by JS -->
+</div>
+
+<!-- 目录弹窗 -->
+<div class="toc-modal" id="toc-modal" onclick="closeTocOutside(event)">
+  <div class="toc-content">
+    <div class="toc-header">
+      <h3>📖 绘本目录</h3>
+      <button class="toc-close" onclick="closeToc()">×</button>
+    </div>
+    <div class="toc-list" id="toc-list">
+    </div>
+  </div>
+</div>
+
+<script>
+const BOOK_DATA = {
+  title: "__BOOK_TITLE__",
+  coverImage: "__COVER_IMAGE__",
+  pages: __PAGES_JSON__
+};
+
+const totalPages = BOOK_DATA.pages.length + 2; // cover + pages + end
+
+function renderBook() {
+  const scroll = document.getElementById('book-scroll');
+  let html = '';
+
+  // 封面
+  html += `<section class="page cover-page" id="page-cover">
+    <div class="cover-img-wrap">
+      <img src="${BOOK_DATA.coverImage}" alt="cover">
+    </div>
+    <div class="cover-title">${BOOK_DATA.title}</div>
+    <div class="cover-subtitle">竖屏滑动·沉浸式阅读</div>
+    <div class="scroll-hint">向下滑动开始</div>
+  </section>`;
+
+  // 内容页
+  BOOK_DATA.pages.forEach((page, i) => {
+    const layout = page.layout || 'bottom';
+    html += `<section class="page" id="page-${i + 1}" data-layout="${layout}">
+      <div class="page-image-card">
+        <img src="${page.image}" alt="第 ${i + 1} 页">
+      </div>
+      <div class="page-text-card">${page.text}</div>
+      <div class="page-num">第 ${i + 1} 页 / 共 ${BOOK_DATA.pages.length} 页</div>
+    </section>`;
+  });
+
+  // 结束页
+  html += `<section class="page end-page" id="page-end">
+    <div class="stars">✨🌟✨</div>
+    <h2>故事讲完啦</h2>
+    <p>晚安，做个好梦</p>
+    <button class="back-btn" onclick="scrollToPage(0)">🔄 重新阅读</button>
+  </section>`;
+
+  scroll.innerHTML = html;
+  renderTocList();
+
+  // 监听滚动更新进度
+  scroll.addEventListener('scroll', updateProgress);
+}
+
+function renderTocList() {
+  const list = document.getElementById('toc-list');
+  let html = '';
+
+  html += `<div class="toc-item-row" onclick="scrollToPage(0); closeToc();">
+    <div class="toc-item-thumb"><img src="${BOOK_DATA.coverImage}" alt="封面"></div>
+    <div class="toc-item-label">封面</div>
+  </div>`;
+
+  BOOK_DATA.pages.forEach((page, i) => {
+    html += `<div class="toc-item-row" onclick="scrollToPage(${i + 1}); closeToc();">
+      <div class="toc-item-thumb"><img src="${page.image}" alt="第${i + 1}页"></div>
+      <div class="toc-item-label">第 ${i + 1} 页</div>
+    </div>`;
+  });
+
+  list.innerHTML = html;
+}
+
+function scrollToPage(idx) {
+  const targetId = idx === 0 ? 'page-cover' : idx >= totalPages - 1 ? 'page-end' : `page-${idx}`;
+  const target = document.getElementById(targetId);
+  if (target) {
+    target.scrollIntoView({ behavior: 'smooth' });
+  }
+}
+
+function updateProgress() {
+  const scroll = document.getElementById('book-scroll');
+  const progress = (scroll.scrollTop / (scroll.scrollHeight - scroll.clientHeight)) * 100;
+  document.getElementById('progress-fill').style.width = progress + '%';
+}
+
+function toggleToc() {
+  const modal = document.getElementById('toc-modal');
+  if (modal.classList.contains('show')) {
+    closeToc();
+  } else {
+    openToc();
+  }
+}
+function openToc() { document.getElementById('toc-modal').classList.add('show'); }
+function closeToc() { document.getElementById('toc-modal').classList.remove('show'); }
+function closeTocOutside(event) {
+  if (event.target.id === 'toc-modal') closeToc();
+}
+
+// 键盘支持
+document.addEventListener('keydown', e => {
+  const scroll = document.getElementById('book-scroll');
+  if (e.key === 'ArrowDown' || e.key === ' ') {
+    e.preventDefault();
+    scroll.scrollBy({ top: window.innerHeight * 0.8, behavior: 'smooth' });
+  }
+  if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    scroll.scrollBy({ top: -window.innerHeight * 0.8, behavior: 'smooth' });
+  }
+  if (e.key === 'Escape') closeToc();
+});
+
+renderBook();
+</script>
+</body>
+</html>

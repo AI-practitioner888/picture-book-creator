@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>__BOOK_TITLE__</title>
+<style>
+:root {
+  /* 封面书名位置变量，可根据需要调整 */
+  --cover-title-top: 15%;
+  --cover-title-font-size: 32px;
+  --cover-title-color: #ffffff;
+  --cover-subtitle-color: rgba(255,255,255,0.8);
+
+  /* 圆角与阴影 */
+  --radius-lg: 16px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+  --shadow-soft: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-deep: 0 20px 60px rgba(0,0,0,0.3);
+
+  /* 动画 */
+  --transition-fast: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: "PingFang SC", "Noto Serif SC", "Microsoft YaHei", "SimSun", serif;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; min-height: 100vh;
+  overflow: hidden; user-select: none;
+  padding: 20px 0;
+}
+.book-container {
+  position: relative; width: 90vw; max-width: 500px;
+  aspect-ratio: 3/4;
+  box-shadow: var(--shadow-deep);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: #000;
+}
+.page {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  display: none; opacity: 0;
+  transition: opacity var(--transition-normal);
+}
+.page.active { display: flex; opacity: 1; }
+.page img { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
+
+/* ===== 文字浮层样式 ===== */
+
+/* 底部浮层（默认） */
+.page .text-overlay {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: linear-gradient(transparent, rgba(0,0,0,0.6) 30%, rgba(0,0,0,0.8) 100%);
+  color: #fff; padding: 60px 28px 36px; text-align: center;
+  font-size: 17px; line-height: 1.8; letter-spacing: 0.05em;
+  transition: all var(--transition-fast);
+}
+
+/* 侧边浮字样式（左/右，垂直居中）——文字直接浮在画面空白区，无"白补丁"感 */
+.page[data-layout="side"] .text-overlay {
+  top: 50%; transform: translateY(-50%);
+  bottom: auto; left: auto; right: 16px;
+  width: 40%;
+  max-height: 72%;
+  overflow: hidden;
+  background: linear-gradient(160deg, rgba(255,253,248,0.40), rgba(255,253,248,0.22));
+  color: #3f3a36;
+  padding: 14px 16px;
+  border-radius: 8px;
+  text-align: left;
+  text-shadow: 0 1px 8px rgba(255,255,255,0.9), 0 0 3px rgba(255,255,255,0.75);
+}
+.page[data-layout="side-left"] .text-overlay {
+  left: 16px; right: auto;
+}
+
+/* 角落浮字变体——锚定四角，避让画面主体。
+   选页规则：先看该页插图主体（角色/关键道具）占据的方位，
+   文字放主体对角或同侧空白区；主体居中偏下用 bottom 渐变。
+   side-tr 右上 / side-tl 左上 / side-br 右下 / side-bl 左下 */
+.page[data-layout="side-tr"] .text-overlay,
+.page[data-layout="side-tl"] .text-overlay,
+.page[data-layout="side-br"] .text-overlay,
+.page[data-layout="side-bl"] .text-overlay {
+  top: auto; bottom: auto; transform: none;
+  width: 40%;
+  max-height: 56%;
+  overflow: hidden;
+  background: linear-gradient(160deg, rgba(255,253,248,0.52), rgba(255,253,248,0.32));
+  color: #3f3a36;
+  padding: 14px 16px;
+  border-radius: 8px;
+  text-align: left;
+  text-shadow: 0 1px 10px rgba(255,255,255,0.95), 0 0 4px rgba(255,255,255,0.85);
+}
+.page[data-layout="side-tr"] .text-overlay { top: 16px; right: 16px; }
+.page[data-layout="side-tl"] .text-overlay { top: 16px; left: 16px; }
+.page[data-layout="side-br"] .text-overlay { bottom: 40px; right: 16px; }
+.page[data-layout="side-bl"] .text-overlay { bottom: 40px; left: 16px; }
+
+/* 亲子共读引导行（<small>）在所有布局下的统一样式 */
+.page .text-overlay small {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.6;
+  opacity: 0.75;
+}
+
+/* 上下分栏样式（上图下文） */
+.page[data-layout="split"] {
+  flex-direction: column;
+}
+.page[data-layout="split"] img {
+  position: relative;
+  height: 62%;
+  object-fit: cover;
+}
+.page[data-layout="split"] .text-overlay {
+  position: relative;
+  height: 38%;
+  background: #fffef5;
+  color: #333;
+  padding: 20px 24px;
+  text-align: left;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.08);
+}
+
+.page .page-number {
+  position: absolute; bottom: 10px; right: 16px;
+  color: rgba(255,255,255,0.5); font-size: 12px;
+  z-index: 5;
+  transition: color var(--transition-fast);
+}
+.page[data-layout="split"] .page-number {
+  color: rgba(0,0,0,0.3);
+  bottom: 8px;
+}
+
+/* ===== 封面样式 ===== */
+.cover {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: flex-start; text-align: center;
+}
+.cover-bg { position: absolute; width: 100%; height: 100%; object-fit: cover; }
+.cover .title {
+  position: relative;
+  top: var(--cover-title-top);
+  font-size: var(--cover-title-font-size);
+  font-weight: bold;
+  color: var(--cover-title-color);
+  margin-bottom: 12px;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+  transition: all var(--transition-normal);
+}
+.cover .subtitle {
+  position: relative;
+  top: var(--cover-title-top);
+  font-size: 15px;
+  color: var(--cover-subtitle-color);
+  margin-bottom: auto;
+  letter-spacing: 0.05em;
+}
+.cover .btn-enter {
+  position: relative;
+  padding: 14px 48px;
+  background: rgba(255,255,255,0.2);
+  border: 1.5px solid rgba(255,255,255,0.5);
+  border-radius: 40px;
+  color: #fff; font-size: 17px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: all var(--transition-fast);
+  margin-bottom: 40px;
+}
+.cover .btn-enter:hover {
+  background: rgba(255,255,255,0.35);
+  transform: scale(1.05);
+  box-shadow: 0 4px 20px rgba(255,255,255,0.2);
+}
+
+/* ===== 结束页 ===== */
+.end-page {
+  background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1e 100%);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.end-page h2 {
+  font-size: 32px;
+  margin-bottom: 16px;
+  font-weight: 300;
+  letter-spacing: 0.1em;
+}
+.end-page p {
+  font-size: 15px;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 8px;
+}
+.end-page .stars {
+  font-size: 24px;
+  margin-bottom: 20px;
+  opacity: 0.8;
+}
+
+/* ===== 控制栏 ===== */
+.controls {
+  display: flex; align-items: center; gap: 12px; margin-top: 20px;
+}
+.controls button {
+  padding: 10px 20px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.08);
+  color: #fff; font-size: 14px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  backdrop-filter: blur(10px);
+}
+.controls button:hover:not(:disabled) {
+  background: rgba(255,255,255,0.18);
+  transform: translateY(-1px);
+}
+.controls button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.controls .page-indicator {
+  color: rgba(255,255,255,0.6);
+  font-size: 14px;
+  min-width: 70px;
+  text-align: center;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
+}
+.controls .page-indicator:hover {
+  background: rgba(255,255,255,0.1);
+}
+.controls .btn-auto {
+  font-size: 13px;
+  padding: 8px 14px;
+}
+.controls .btn-auto.active {
+  background: rgba(255,255,255,0.25);
+  border-color: rgba(255,255,255,0.4);
+}
+
+/* ===== 目录弹窗 ===== */
+.toc-modal {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+.toc-modal.show {
+  display: flex;
+  opacity: 1;
+}
+.toc-content {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  max-width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  width: 360px;
+  transform: translateY(20px);
+  transition: transform var(--transition-normal);
+}
+.toc-modal.show .toc-content {
+  transform: translateY(0);
+}
+.toc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #eee;
+}
+.toc-header h3 {
+  font-size: 18px;
+  color: #333;
+}
+.toc-close {
+  width: 32px; height: 32px;
+  border: none;
+  background: #f5f5f5;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 18px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition-fast);
+}
+.toc-close:hover {
+  background: #eee;
+}
+.toc-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.toc-item {
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 2px solid transparent;
+  transition: all var(--transition-fast);
+  aspect-ratio: 3/4;
+}
+.toc-item:hover {
+  border-color: #4a9eff;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-soft);
+}
+.toc-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.toc-item .toc-num {
+  text-align: center;
+  font-size: 12px;
+  color: #666;
+  padding: 4px 0;
+  background: #f9f9f9;
+}
+
+/* ===== 触摸区域 ===== */
+.touch-left, .touch-right {
+  position: absolute; top: 0; bottom: 0; width: 25%; z-index: 10;
+}
+.touch-left { left: 0; }
+.touch-right { right: 0; }
+
+/* ===== 响应式 ===== */
+@media (max-width: 480px) {
+  .page .text-overlay {
+    font-size: 15px;
+    padding: 45px 18px 28px;
+  }
+  .page[data-layout="split"] .text-overlay {
+    font-size: 14px;
+    padding: 16px 18px;
+  }
+  .cover .title {
+    font-size: 26px;
+  }
+  .cover .subtitle {
+    font-size: 13px;
+  }
+  .toc-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .controls button {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+}
+
+img { -webkit-user-drag: none; pointer-events: none; }
+</style>
+</head>
+<body>
+<div class="book-container" id="book">
+  <!-- Pages injected by JS -->
+</div>
+<div class="controls">
+  <button id="btn-prev" onclick="prevPage()">← 上一页</button>
+  <span class="page-indicator" id="page-indicator" onclick="toggleToc()" title="点击查看目录"></span>
+  <button id="btn-auto" class="btn-auto" onclick="toggleAutoPlay()">⏸ 自动翻页</button>
+  <button id="btn-next" onclick="nextPage()">下一页 →</button>
+</div>
+
+<!-- 目录弹窗 -->
+<div class="toc-modal" id="toc-modal" onclick="closeTocOutside(event)">
+  <div class="toc-content">
+    <div class="toc-header">
+      <h3>📖 绘本目录</h3>
+      <button class="toc-close" onclick="closeToc()">×</button>
+    </div>
+    <div class="toc-grid" id="toc-grid">
+      <!-- TOC items injected by JS -->
+    </div>
+  </div>
+</div>
+
+<script>
+const BOOK_DATA = {
+  title: "__BOOK_TITLE__",
+  coverImage: "__COVER_IMAGE__",
+  pages: __PAGES_JSON__
+};
+
+let currentPage = 0;
+const totalPages = BOOK_DATA.pages.length + 1; // cover + pages
+let autoPlayTimer = null;
+let isAutoPlaying = false;
+const AUTO_PLAY_INTERVAL = 5000; // 5秒翻一页
+
+function renderBook() {
+  const book = document.getElementById('book');
+  let html = '';
+
+  // 封面
+  html += `<div class="page cover active" id="page-0" data-layout="cover">
+    <img class="cover-bg" src="${BOOK_DATA.coverImage}" alt="cover">
+    <div class="title">${BOOK_DATA.title}</div>
+    <div class="subtitle">点击翻开绘本</div>
+    <div class="btn-enter" onclick="nextPage()">✨ 开始阅读</div>
+  </div>`;
+
+  // 内容页
+  BOOK_DATA.pages.forEach((page, i) => {
+    const layout = page.layout || 'bottom';
+    html += `<div class="page" id="page-${i + 1}" data-layout="${layout}">
+      <img src="${page.image}" alt="第 ${i + 1} 页">
+      <div class="touch-left" onclick="prevPage()"></div>
+      <div class="touch-right" onclick="nextPage()"></div>
+      <div class="text-overlay">${page.text}</div>
+      <div class="page-number">第 ${i + 1} 页 / 共 ${BOOK_DATA.pages.length} 页</div>
+    </div>`;
+  });
+
+  // 结束页
+  html += `<div class="page end-page" id="page-end" data-layout="end">
+    <div class="stars">✨🌟✨</div>
+    <h2>故事讲完啦</h2>
+    <p>下次再见</p>
+    <p style="font-size:13px; margin-top:20px; opacity:0.5;">点击封面重新开始</p>
+  </div>`;
+
+  book.innerHTML = html;
+  renderToc();
+  updateControls();
+}
+
+// 渲染目录缩略图
+function renderToc() {
+  const grid = document.getElementById('toc-grid');
+  let html = '';
+
+  // 封面
+  html += `<div class="toc-item" onclick="goToPage(0)">
+    <img src="${BOOK_DATA.coverImage}" alt="封面">
+    <div class="toc-num">封面</div>
+  </div>`;
+
+  // 内容页
+  BOOK_DATA.pages.forEach((page, i) => {
+    html += `<div class="toc-item" onclick="goToPage(${i + 1})">
+      <img src="${page.image}" alt="第${i + 1}页">
+      <div class="toc-num">第 ${i + 1} 页</div>
+    </div>`;
+  });
+
+  grid.innerHTML = html;
+}
+
+function showPage(idx) {
+  document.querySelectorAll('.page').forEach(p => {
+    p.classList.remove('active');
+  });
+  const pg = document.getElementById(idx >= totalPages ? 'page-end' : `page-${idx}`);
+  if (pg) {
+    pg.classList.add('active');
+  }
+  updateControls();
+}
+
+function nextPage() {
+  if (currentPage < totalPages) {
+    currentPage++;
+    showPage(currentPage);
+  } else {
+    // 最后一页点击回到封面
+    currentPage = 0;
+    showPage(0);
+  }
+  resetAutoPlay();
+}
+
+function prevPage() {
+  if (currentPage > 0) {
+    currentPage--;
+    showPage(currentPage);
+  }
+  resetAutoPlay();
+}
+
+function goToPage(idx) {
+  currentPage = idx;
+  showPage(currentPage);
+  closeToc();
+  resetAutoPlay();
+}
+
+function updateControls() {
+  document.getElementById('btn-prev').disabled = currentPage === 0;
+  document.getElementById('btn-next').disabled = false;
+  document.getElementById('page-indicator').textContent =
+    currentPage === 0 ? '封面' :
+    currentPage >= totalPages ? '完' :
+    `${currentPage}/${BOOK_DATA.pages.length}`;
+}
+
+// ===== 自动翻页 =====
+function toggleAutoPlay() {
+  const btn = document.getElementById('btn-auto');
+  if (isAutoPlaying) {
+    stopAutoPlay();
+    btn.textContent = '▶ 自动翻页';
+    btn.classList.remove('active');
+  } else {
+    startAutoPlay();
+    btn.textContent = '⏸ 暂停';
+    btn.classList.add('active');
+  }
+}
+
+function startAutoPlay() {
+  isAutoPlaying = true;
+  autoPlayTimer = setInterval(() => {
+    if (currentPage < totalPages) {
+      currentPage++;
+      showPage(currentPage);
+    } else {
+      stopAutoPlay();
+      document.getElementById('btn-auto').textContent = '▶ 自动翻页';
+      document.getElementById('btn-auto').classList.remove('active');
+    }
+  }, AUTO_PLAY_INTERVAL);
+}
+
+function stopAutoPlay() {
+  isAutoPlaying = false;
+  if (autoPlayTimer) {
+    clearInterval(autoPlayTimer);
+    autoPlayTimer = null;
+  }
+}
+
+function resetAutoPlay() {
+  if (isAutoPlaying) {
+    stopAutoPlay();
+    startAutoPlay();
+  }
+}
+
+// ===== 目录弹窗 =====
+function toggleToc() {
+  const modal = document.getElementById('toc-modal');
+  if (modal.classList.contains('show')) {
+    closeToc();
+  } else {
+    openToc();
+  }
+}
+
+function openToc() {
+  document.getElementById('toc-modal').classList.add('show');
+}
+
+function closeToc() {
+  document.getElementById('toc-modal').classList.remove('show');
+}
+
+function closeTocOutside(event) {
+  if (event.target.id === 'toc-modal') {
+    closeToc();
+  }
+}
+
+// ===== 键盘支持 =====
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') {
+    e.preventDefault();
+    nextPage();
+  }
+  if (e.key === 'ArrowLeft') {
+    e.preventDefault();
+    prevPage();
+  }
+  if (e.key === 'Escape') {
+    closeToc();
+  }
+});
+
+renderBook();
+</script>
+</body>
+</html>

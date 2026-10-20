@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>__BOOK_TITLE__</title>
+<style>
+:root {
+  --cover-title-top: 20%;
+  --cover-title-font-size: 36px;
+  --cover-title-color: #ffffff;
+  --cover-subtitle-color: rgba(255,255,255,0.8);
+
+  --radius-lg: 16px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+  --shadow-soft: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-deep: 0 20px 60px rgba(0,0,0,0.3);
+
+  --transition-fast: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: "PingFang SC", "Noto Serif SC", "Microsoft YaHei", "SimSun", serif;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; min-height: 100vh;
+  overflow: hidden; user-select: none;
+  padding: 20px 0;
+}
+
+.book-container {
+  position: relative;
+  width: 92vw;
+  max-width: 960px;
+  aspect-ratio: 16/9;
+  box-shadow: var(--shadow-deep);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: #000;
+  perspective: 2000px;
+}
+
+.page {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  display: none; opacity: 0;
+  transition: opacity var(--transition-normal);
+}
+.page.active { display: flex; opacity: 1; }
+.page img { width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; }
+
+/* 左右双页模拟 */
+.book-container.two-page .page.active {
+  width: 50%;
+}
+.book-container.two-page .page.active.left {
+  left: 0;
+  border-right: 2px solid rgba(0,0,0,0.3);
+}
+.book-container.two-page .page.active.right {
+  left: 50%;
+  border-left: 2px solid rgba(0,0,0,0.3);
+}
+
+/* ===== 文字浮层样式 ===== */
+.page .text-overlay {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: linear-gradient(transparent, rgba(0,0,0,0.6) 30%, rgba(0,0,0,0.8) 100%);
+  color: #fff; padding: 50px 40px 30px; text-align: center;
+  font-size: 19px; line-height: 1.8; letter-spacing: 0.05em;
+  transition: all var(--transition-fast);
+}
+
+.page[data-layout="side"] .text-overlay {
+  top: 50%; transform: translateY(-50%);
+  bottom: auto; left: auto; right: 24px;
+  width: 40%;
+  background: linear-gradient(transparent, rgba(0,0,0,0.7) 40%);
+  color: #fff;
+  padding: 24px;
+  border-radius: var(--radius-md);
+  backdrop-filter: blur(4px);
+  text-align: left;
+  font-size: 18px;
+}
+.page[data-layout="side-left"] .text-overlay {
+  left: 24px; right: auto;
+}
+
+.page[data-layout="split"] {
+  flex-direction: row;
+}
+.page[data-layout="split"] img {
+  position: relative;
+  width: 58%;
+  height: 100%;
+  object-fit: cover;
+}
+.page[data-layout="split"] .text-overlay {
+  position: relative;
+  width: 42%;
+  height: 100%;
+  background: #fffef5;
+  color: #333;
+  padding: 36px 32px;
+  text-align: left;
+  font-size: 17px;
+  display: flex;
+  align-items: center;
+  box-shadow: -4px 0 12px rgba(0,0,0,0.08);
+}
+
+.page .page-number {
+  position: absolute; bottom: 12px; right: 24px;
+  color: rgba(255,255,255,0.5); font-size: 13px;
+  z-index: 5;
+}
+.page[data-layout="split"] .page-number {
+  color: rgba(0,0,0,0.3);
+}
+
+/* ===== 封面样式 ===== */
+.cover {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: flex-start; text-align: center;
+}
+.cover-bg { position: absolute; width: 100%; height: 100%; object-fit: cover; }
+.cover .title {
+  position: relative;
+  top: var(--cover-title-top);
+  font-size: var(--cover-title-font-size);
+  font-weight: bold;
+  color: var(--cover-title-color);
+  margin-bottom: 16px;
+  text-shadow: 0 2px 16px rgba(0,0,0,0.6);
+  letter-spacing: 0.1em;
+  line-height: 1.4;
+}
+.cover .subtitle {
+  position: relative;
+  top: var(--cover-title-top);
+  font-size: 17px;
+  color: var(--cover-subtitle-color);
+  margin-bottom: auto;
+  letter-spacing: 0.05em;
+}
+.cover .btn-enter {
+  position: relative;
+  padding: 16px 56px;
+  background: rgba(255,255,255,0.2);
+  border: 1.5px solid rgba(255,255,255,0.5);
+  border-radius: 40px;
+  color: #fff; font-size: 18px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: all var(--transition-fast);
+  margin-bottom: 48px;
+}
+.cover .btn-enter:hover {
+  background: rgba(255,255,255,0.35);
+  transform: scale(1.05);
+  box-shadow: 0 4px 20px rgba(255,255,255,0.2);
+}
+
+/* ===== 结束页 ===== */
+.end-page {
+  background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1e 100%);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.end-page h2 {
+  font-size: 36px;
+  margin-bottom: 16px;
+  font-weight: 300;
+  letter-spacing: 0.15em;
+}
+.end-page p {
+  font-size: 16px;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 8px;
+}
+.end-page .stars {
+  font-size: 28px;
+  margin-bottom: 24px;
+  opacity: 0.8;
+}
+
+/* ===== 控制栏 ===== */
+.controls {
+  display: flex; align-items: center; gap: 16px; margin-top: 24px;
+}
+.controls button {
+  padding: 12px 24px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.08);
+  color: #fff; font-size: 15px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  backdrop-filter: blur(10px);
+}
+.controls button:hover:not(:disabled) {
+  background: rgba(255,255,255,0.18);
+  transform: translateY(-1px);
+}
+.controls button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.controls .page-indicator {
+  color: rgba(255,255,255,0.6);
+  font-size: 15px;
+  min-width: 80px;
+  text-align: center;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
+}
+.controls .page-indicator:hover {
+  background: rgba(255,255,255,0.1);
+}
+.controls .btn-auto {
+  font-size: 14px;
+  padding: 10px 18px;
+}
+.controls .btn-auto.active {
+  background: rgba(255,255,255,0.25);
+  border-color: rgba(255,255,255,0.4);
+}
+.controls .btn-layout {
+  font-size: 13px;
+  padding: 10px 16px;
+}
+
+/* ===== 目录弹窗 ===== */
+.toc-modal {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+.toc-modal.show {
+  display: flex;
+  opacity: 1;
+}
+.toc-content {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  max-width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  width: 520px;
+  transform: translateY(20px);
+  transition: transform var(--transition-normal);
+}
+.toc-modal.show .toc-content {
+  transform: translateY(0);
+}
+.toc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #eee;
+}
+.toc-header h3 {
+  font-size: 20px;
+  color: #333;
+}
+.toc-close {
+  width: 36px; height: 36px;
+  border: none;
+  background: #f5f5f5;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 20px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition-fast);
+}
+.toc-close:hover {
+  background: #eee;
+}
+.toc-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+.toc-item {
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 2px solid transparent;
+  transition: all var(--transition-fast);
+  aspect-ratio: 16/9;
+}
+.toc-item:hover {
+  border-color: #4a9eff;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-soft);
+}
+.toc-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.toc-item .toc-num {
+  text-align: center;
+  font-size: 12px;
+  color: #666;
+  padding: 4px 0;
+  background: #f9f9f9;
+}
+
+/* ===== 触摸区域 ===== */
+.touch-left, .touch-right {
+  position: absolute; top: 0; bottom: 0; width: 20%; z-index: 10;
+}
+.touch-left { left: 0; }
+.touch-right { right: 0; }
+
+/* ===== 响应式 ===== */
+@media (max-width: 768px) {
+  .page .text-overlay {
+    font-size: 16px;
+    padding: 40px 24px 24px;
+  }
+  .page[data-layout="split"] .text-overlay {
+    font-size: 15px;
+    padding: 20px 20px;
+  }
+  .cover .title {
+    font-size: 28px;
+  }
+  .cover .subtitle {
+    font-size: 14px;
+  }
+  .toc-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .controls button {
+    padding: 10px 18px;
+    font-size: 14px;
+  }
+}
+
+img { -webkit-user-drag: none; pointer-events: none; }
+</style>
+</head>
+<body>
+<div class="book-container" id="book">
+</div>
+<div class="controls">
+  <button id="btn-prev" onclick="prevPage()">← 上一页</button>
+  <span class="page-indicator" id="page-indicator" onclick="toggleToc()" title="点击查看目录"></span>
+  <button id="btn-auto" class="btn-auto" onclick="toggleAutoPlay()">⏸ 自动翻页</button>
+  <button id="btn-next" onclick="nextPage()">下一页 →</button>
+</div>
+
+<!-- 目录弹窗 -->
+<div class="toc-modal" id="toc-modal" onclick="closeTocOutside(event)">
+  <div class="toc-content">
+    <div class="toc-header">
+      <h3>📖 绘本目录</h3>
+      <button class="toc-close" onclick="closeToc()">×</button>
+    </div>
+    <div class="toc-grid" id="toc-grid">
+    </div>
+  </div>
+</div>
+
+<script>
+const BOOK_DATA = {
+  title: "__BOOK_TITLE__",
+  coverImage: "__COVER_IMAGE__",
+  pages: __PAGES_JSON__
+};
+
+let currentPage = 0;
+const totalPages = BOOK_DATA.pages.length + 1;
+let autoPlayTimer = null;
+let isAutoPlaying = false;
+const AUTO_PLAY_INTERVAL = 6000;
+
+function renderBook() {
+  const book = document.getElementById('book');
+  let html = '';
+
+  html += `<div class="page cover active" id="page-0" data-layout="cover">
+    <img class="cover-bg" src="${BOOK_DATA.coverImage}" alt="cover">
+    <div class="title">${BOOK_DATA.title}</div>
+    <div class="subtitle">横屏横翻·沉浸式阅读</div>
+    <div class="btn-enter" onclick="nextPage()">✨ 开始阅读</div>
+  </div>`;
+
+  BOOK_DATA.pages.forEach((page, i) => {
+    const layout = page.layout || 'bottom';
+    html += `<div class="page" id="page-${i + 1}" data-layout="${layout}">
+      <img src="${page.image}" alt="第 ${i + 1} 页">
+      <div class="touch-left" onclick="prevPage()"></div>
+      <div class="touch-right" onclick="nextPage()"></div>
+      <div class="text-overlay">${page.text}</div>
+      <div class="page-number">第 ${i + 1} 页 / 共 ${BOOK_DATA.pages.length} 页</div>
+    </div>`;
+  });
+
+  html += `<div class="page end-page" id="page-end" data-layout="end">
+    <div class="stars">✨🌟✨</div>
+    <h2>故事讲完啦</h2>
+    <p>晚安，做个好梦</p>
+    <p style="font-size:13px; margin-top:20px; opacity:0.5;">点击重新开始</p>
+  </div>`;
+
+  book.innerHTML = html;
+  renderToc();
+  updateControls();
+}
+
+function renderToc() {
+  const grid = document.getElementById('toc-grid');
+  let html = '';
+  html += `<div class="toc-item" onclick="goToPage(0)">
+    <img src="${BOOK_DATA.coverImage}" alt="封面">
+    <div class="toc-num">封面</div>
+  </div>`;
+  BOOK_DATA.pages.forEach((page, i) => {
+    html += `<div class="toc-item" onclick="goToPage(${i + 1})">
+      <img src="${page.image}" alt="第${i + 1}页">
+      <div class="toc-num">第 ${i + 1} 页</div>
+    </div>`;
+  });
+  grid.innerHTML = html;
+}
+
+function showPage(idx) {
+  document.querySelectorAll('.page').forEach(p => {
+    p.classList.remove('active');
+  });
+  const pg = document.getElementById(idx >= totalPages ? 'page-end' : `page-${idx}`);
+  if (pg) {
+    pg.classList.add('active');
+  }
+  updateControls();
+}
+
+function nextPage() {
+  if (currentPage < totalPages) {
+    currentPage++;
+    showPage(currentPage);
+  } else {
+    currentPage = 0;
+    showPage(0);
+  }
+  resetAutoPlay();
+}
+
+function prevPage() {
+  if (currentPage > 0) {
+    currentPage--;
+    showPage(currentPage);
+  }
+  resetAutoPlay();
+}
+
+function goToPage(idx) {
+  currentPage = idx;
+  showPage(currentPage);
+  closeToc();
+  resetAutoPlay();
+}
+
+function updateControls() {
+  document.getElementById('btn-prev').disabled = currentPage === 0;
+  document.getElementById('btn-next').disabled = false;
+  document.getElementById('page-indicator').textContent =
+    currentPage === 0 ? '封面' :
+    currentPage >= totalPages ? '完' :
+    `${currentPage}/${BOOK_DATA.pages.length}`;
+}
+
+function toggleAutoPlay() {
+  const btn = document.getElementById('btn-auto');
+  if (isAutoPlaying) {
+    stopAutoPlay();
+    btn.textContent = '▶ 自动翻页';
+    btn.classList.remove('active');
+  } else {
+    startAutoPlay();
+    btn.textContent = '⏸ 暂停';
+    btn.classList.add('active');
+  }
+}
+
+function startAutoPlay() {
+  isAutoPlaying = true;
+  autoPlayTimer = setInterval(() => {
+    if (currentPage < totalPages) {
+      currentPage++;
+      showPage(currentPage);
+    } else {
+      stopAutoPlay();
+      document.getElementById('btn-auto').textContent = '▶ 自动翻页';
+      document.getElementById('btn-auto').classList.remove('active');
+    }
+  }, AUTO_PLAY_INTERVAL);
+}
+
+function stopAutoPlay() {
+  isAutoPlaying = false;
+  if (autoPlayTimer) {
+    clearInterval(autoPlayTimer);
+    autoPlayTimer = null;
+  }
+}
+
+function resetAutoPlay() {
+  if (isAutoPlaying) {
+    stopAutoPlay();
+    startAutoPlay();
+  }
+}
+
+function toggleToc() {
+  const modal = document.getElementById('toc-modal');
+  if (modal.classList.contains('show')) {
+    closeToc();
+  } else {
+    openToc();
+  }
+}
+function openToc() { document.getElementById('toc-modal').classList.add('show'); }
+function closeToc() { document.getElementById('toc-modal').classList.remove('show'); }
+function closeTocOutside(event) {
+  if (event.target.id === 'toc-modal') closeToc();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextPage(); }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); prevPage(); }
+  if (e.key === 'Escape') closeToc();
+});
+
+renderBook();
+</script>
+</body>
+</html>
