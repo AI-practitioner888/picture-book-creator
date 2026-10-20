@@ -338,3 +338,20 @@ def b64(fp):
 
 **解决方案**：多页生图一律串行，一次一张，生成→质检→下一张。
 宁可慢，不可丢。
+
+## 问题 15：批量去水印的三个工具链坑（v2.2.0 新增）
+
+ImageGen 出图默认带小水印，用 `buddy-image-processing.py image-edit --operation erase`
+云端服务去除（约 30-60s/张）。多页批量时踩过三个坑：
+
+1. **结果字段名不是 `images`**：CLI 的 stdout 含多段 JSON（提交状态 + 最终结果），
+   且最终结果里图片路径在 `result_files[].path`，不是 `images[].path`。
+   解析必须逐个 `JSONDecoder().raw_decode()` 解码所有 JSON 对象再取含路径的那个，
+   或直接正则抓 `"path": "..."`。
+2. **token 中途过期**：`connect_cloud_service` 返回的 clientTempToken 有效期约 40-60 分钟，
+   20 张批量跑 15 分钟以上就可能中途 `AUTHENTICATION_EXPIRED`——**每轮批处理都要
+   重新取一次 token**，并在脚本里检测到连续鉴权失败立即中止（别把时间烧在重试上）。
+3. **失败不覆盖原图**：erase 失败时不要动原图；成功时把结果 copyfile 覆盖、删临时文件。
+   WorkBuddy 会话目录下会残留 `processed_image_*` 临时文件，跑完记得清理。
+
+**一句话：批处理去水印 = 新 token + raw_decode 解析 result_files + 失败保留原图。**

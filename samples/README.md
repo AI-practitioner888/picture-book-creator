@@ -23,3 +23,17 @@
 - 水墨国风模板首跑，小墨滴认识笔、墨、纸、砚。8 页，繁体「學」字正确渲染。
 - 在线翻页：https://ai-practitioner888.github.io/picture-book-creator/samples/ink-drop/ （仓库已开 GitHub Pages，源=main 根目录）
 - 离线单文件（内嵌原图，25-34MB）：见本地 `outputs/ink-drop/`，不入库
+
+## 爸爸的图纸
+
+- 画风模板：写实水彩怀旧　页数：10　定位：工程人传承 · 6-12 岁
+- 1980s 北方乡村，工程师爸爸深夜画图，孩子从好奇到接棒。写实怀旧模板首跑，年代元素零穿帮。
+- 在线翻页：https://ai-practitioner888.github.io/picture-book-creator/samples/fathers-blueprint/ （仓库已开 GitHub Pages，源=main 根目录）
+- 离线单文件（内嵌原图，25-34MB）：见本地 `outputs/fathers-blueprint/`，不入库
+
+## 小鳄鱼查理爱刷牙
+
+- 画风模板：扁平卡通　页数：8　定位：习惯养成 · 3-6 岁
+- 牙医查出"糖糖怪"，刷牙把它赶跑。扁平卡通模板首跑，新角色锚点反哺样本。
+- 在线翻页：https://ai-practitioner888.github.io/picture-book-creator/samples/charlie-toothbrush/ （仓库已开 GitHub Pages，源=main 根目录）
+- 离线单文件（内嵌原图，25-34MB）：见本地 `outputs/charlie-toothbrush/`，不入库

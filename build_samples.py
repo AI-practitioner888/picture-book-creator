@@ -19,6 +19,8 @@ BOOKS = [
     ('moonlight',       'mianhua-moonlight', '小棉花和月亮灯.html',   '小棉花和月亮灯',   '低幼水彩', 8),
     ('red-riding-hood', 'xiaohongmao',       '小红帽智斗大灰狼.html', '小红帽智斗大灰狼', '低幼水彩', 10),
     ('ink-drop',        'xiaomodi',          '小墨滴和文房四宝.html', '小墨滴和文房四宝', '水墨国风', 8),
+    ('fathers-blueprint', 'baba-tuzhi',      '爸爸的图纸.html',       '爸爸的图纸',       '写实水彩怀旧', 10),
+    ('charlie-toothbrush', 'charlie-brush',  '小鳄鱼查理爱刷牙.html', '小鳄鱼查理爱刷牙', '扁平卡通', 8),
 ]
 
 PAT = re.compile(r'data:image/png;base64,[A-Za-z0-9+/=]+')
@@ -76,6 +78,8 @@ meta = {
     'moonlight': ('睡前情绪 · 3-5 岁', '小棉花怕黑，月亮灯陪它入睡。8 页全 bottom 布局终版，三轮版式迭代的定型样本。'),
     'red-riding-hood': ('经典改编 · 5-7 岁', '温和智慧版：无惊吓，小红帽用热茶计和晾衣绳识破大灰狼。10 页，多角色锚点链样本。'),
     'ink-drop': ('国学启蒙 · 4-7 岁', '水墨国风模板首跑，小墨滴认识笔、墨、纸、砚。8 页，繁体「學」字正确渲染。'),
+    'fathers-blueprint': ('工程人传承 · 6-12 岁', '1980s 北方乡村，工程师爸爸深夜画图，孩子从好奇到接棒。写实怀旧模板首跑，年代元素零穿帮。'),
+    'charlie-toothbrush': ('习惯养成 · 3-6 岁', '牙医查出"糖糖怪"，刷牙把它赶跑。扁平卡通模板首跑，新角色锚点反哺样本。'),
 }
 lines = ['# 实战样书', '',
          '三本全部由 `picture-book-creator` 技能实跑产出，未做任何人工修图。',

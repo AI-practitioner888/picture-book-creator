@@ -6,7 +6,7 @@ description: 儿童绘本全流程创作技能——从需求确认、故事策�
 description_zh: 儿童绘本全流程创作：需求确认→故事大纲→封面设计→分镜内容→AI生图→交互式HTML绘本交付。内置风格一致性机制（冻结风格块、负向词库、hex色板、图生图锚定、中段校准），确保全书色温/笔触/纸纹统一。覆盖2-12岁，支持水彩/写实/国风/卡通四种风格。
 description_en: End-to-end children's picture book creation: requirement confirmation, story outline, cover design, storyboard content, AI image generation, and interactive HTML delivery. Built-in style-consistency mechanism (frozen style block, negative prompts, hex palettes, image-to-image anchoring, mid-way calibration) keeps color temperature, brushwork and paper texture uniform across all pages. For ages 2-12, four art styles.
 category: content
-version: 2.1.3
+version: 2.2.0
 author: AI时代践行者
 agent_created: true
 ---
@@ -27,6 +27,12 @@ v2.1.2 定论——**bottom 横版底部带是绘本文字的母语**：文字�
 与插图同一种语言，全书默认统一；四角浮字降级为例外页专用。判据：
 文字要像画在纸上，不能贴在纸上，更不能挂在角上。
 第一条实战绘本《小棉花和月亮灯》8 页全部 bottom，终版获认可。
+
+**v2.2 核心升级：四种画风模板全部实战闭环。** B 写实水彩怀旧风（《爸爸的图纸》10 页）
+与 D 扁平卡通风（《小鳄鱼查理爱刷牙》8 页）跑完后，四个模板全部有实战背书，零模板级 bug。
+本轮新增两条经验：① **新角色锚点反哺**——糖糖怪首登场的 P3 与查理分离，P6 逃跑戏直接
+图生图锚 P3（锚点图不一定非封面，多角色书按需选锚）；② 年代题材的 NEGATIVE-BLOCK
+必须含 `no modern elements`，否则 AI 会穿出现代物品（写实风尤其明显）。
 
 ## 触发条件
 
