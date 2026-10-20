@@ -1,4 +1,6 @@
 .DS_Store
 Thumbs.db
 verify/
+_verify/
+samples/*/_verify/
 *.log
