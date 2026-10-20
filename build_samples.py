@@ -86,7 +86,8 @@ for slug, title, style, npages, nimg, mbs, _hs in summary:
     lines += [f'## {title}', '',
               f'- 画风模板：{style}　页数：{npages}　定位：{tag}',
               f'- {desc}',
-              f'- 在线翻页：[samples/{slug}/](samples/{slug}/)（需先开启 GitHub Pages）',
+              f'- 在线翻页：https://ai-practitioner888.github.io/picture-book-creator/samples/{slug}/ '
+              f'（仓库已开 GitHub Pages，源=main 根目录）',
               f'- 离线单文件（内嵌原图，25-34MB）：见本地 `outputs/{slug}/`，不入库',
               '']
 with open(os.path.join(DEST, 'README.md'), 'w', encoding='utf-8', newline='\n') as fp:
