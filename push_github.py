@@ -4,15 +4,26 @@
 用法：把 GitHub PAT 写入 D:\\Workspace\\clean-workspace\\.github_token（纯 token 一行），
       然后运行本脚本。token 不进对话记录。
 """
-import json, os, subprocess, sys, urllib.request, urllib.error
+import json, os, subprocess, sys, tempfile, urllib.request, urllib.error
 
 REPO = r'D:\Workspace\clean-workspace\outputs\huiben-master-v2'
 TOKEN_FILE = r'D:\Workspace\clean-workspace\.github_token'
 REPO_NAME = 'picture-book-creator'
 DESCRIPTION = 'AI 绘本创作大师：四层风格锁定体系，解决 AI 绘本"一本书五个画风"问题。四种画风模板，三本实战验证。'
 
+# 空配置文件：用于屏蔽 ~/.gitconfig 里的 ghproxy insteadOf（该镜像已 502）
+_EMPTY_CFG = os.path.join(tempfile.gettempdir(), 'empty_gitconfig')
+open(_EMPTY_CFG, 'w').close()
+
 def run(cmd, env=None, cwd=REPO):
     e = os.environ.copy()
+    # 清掉本机注入的 http(s)_proxy（github 走它会 502 CONNECT tunnel failed）
+    for k in list(e):
+        if k.lower() in ('http_proxy', 'https_proxy', 'all_proxy', 'ftp_proxy'):
+            del e[k]
+    e['GIT_CONFIG_GLOBAL'] = _EMPTY_CFG
+    e['GIT_CONFIG_SYSTEM'] = _EMPTY_CFG
+    e['GIT_TERMINAL_PROMPT'] = '0'
     if env:
         e.update(env)
     r = subprocess.run(cmd, cwd=cwd, env=e, shell=True,
@@ -76,26 +87,21 @@ except urllib.error.HTTPError as ex:
 html_url = f'https://github.com/{login}/{REPO_NAME}'
 # 4. 设置 remote（token 内联，绕过 credential）
 push_url = f'https://{login}:{token}@github.com/{login}/{REPO_NAME}.git'
-code, out = run(f'git remote remove origin 2>nul; git remote add origin "{push_url}"',
-                env={'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_SYSTEM': 'nul'})
+code, out = run(f'git remote remove origin 2>nul & git remote add origin "{push_url}"')
 print('remote 设置:', out.strip() or 'ok')
 
-# 5. push（跳过全局 config，绕过 ghproxy 镜像）
-code, out = run('git push -u origin main',
-                env={'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_SYSTEM': 'nul',
-                     'GIT_TERMINAL_PROMPT': '0'})
+# 5. push
+code, out = run('git push -u origin main')
 print('push exit:', code)
 print(out.strip()[:800])
 if code != 0:
     sys.exit(1)
 
 # 6. 把 remote 里的 token 去掉，改为干净 URL（避免明文常驻）
-run('git remote set-url origin "https://github.com/%s/%s.git"' % (login, REPO_NAME),
-    env={'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_SYSTEM': 'nul'})
+run('git remote set-url origin "https://github.com/%s/%s.git"' % (login, REPO_NAME))
 print('remote 已回写为干净 URL')
 
 # 7. 验证
-code, out = run('git ls-remote --heads origin',
-                env={'GIT_CONFIG_GLOBAL': 'nul', 'GIT_CONFIG_SYSTEM': 'nul'})
+code, out = run('git ls-remote --heads origin')
 print('验证 ls-remote:', out.strip()[:200])
 print('DONE:', html_url)
